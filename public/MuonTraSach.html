@@ -29,10 +29,11 @@
     <header class="bg-white shadow p-4 flex items-center">
       <h2 class="text-2xl font-semibold text-gray-800 mr-8">Mượn / Trả sách</h2>
       <button id="tabBorrow" class="px-4 py-2 text-blue-600 border-b-2 border-blue-600 mr-4">Mượn sách</button>
-      <button id="tabReturn" class="px-4 py-2 text-gray-600 hover:text-blue-600">Trả sách</button>
+      <button id="tabReturn" class="px-4 py-2 text-gray-600 hover:text-blue-600 mr-4">Trả sách</button>
+      <button id="tabList" class="px-4 py-2 text-gray-600 hover:text-blue-600">Danh sách phiếu mượn</button>
     </header>
 
-    <!-- Content -->
+    <!-- Borrow Content -->
     <div id="contentBorrow" class="p-6">
       <!-- Borrow Section: Search by reader ID -->
       <div class="mb-4 flex items-center space-x-2">
@@ -66,6 +67,7 @@
       </div>
     </div>
 
+    <!-- Return Content -->
     <div id="contentReturn" class="p-6 hidden">
       <!-- Return Section -->
       <div class="mb-4 flex items-center space-x-2">
@@ -98,31 +100,142 @@
         <button id="btnProcessReturn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Xác nhận trả</button>
       </div>
     </div>
+
+    <!-- List Content - New Tab for displaying borrow tickets -->
+    <div id="contentList" class="p-6 hidden">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Danh sách phiếu mượn</h3>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="searchBorrowTicket" placeholder="Tìm kiếm phiếu mượn..." class="px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <button id="btnSearchBorrowTicket" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700">Tìm kiếm</button>
+          <button id="btnRefreshList" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ml-2">Làm mới</button>
+        </div>
+      </div>
+      
+      <div class="bg-white shadow rounded-lg overflow-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã phiếu</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã độc giả</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên độc giả</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày mượn</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày hẹn trả</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số sách</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="borrowTicketTable" class="bg-white divide-y divide-gray-200">
+            <!-- Borrow tickets will be populated here -->
+          </tbody>
+        </table>
+      </div>
+      
+      <div id="emptyState" class="text-center py-8 hidden">
+        <span class="material-icons text-gray-400 text-4xl">description</span>
+        <p class="text-gray-500 mt-2">Không có phiếu mượn nào</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for viewing borrow ticket details -->
+  <div id="detailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Chi tiết phiếu mượn</h3>
+          <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        
+        <div id="modalContent" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Mã phiếu:</label>
+              <p id="modalMaPM" class="text-sm text-gray-900"></p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Mã độc giả:</label>
+              <p id="modalMaDG" class="text-sm text-gray-900"></p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Tên độc giả:</label>
+              <p id="modalHoTen" class="text-sm text-gray-900"></p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Trạng thái:</label>
+              <p id="modalTrangThai" class="text-sm"></p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Ngày mượn:</label>
+              <p id="modalNgayMuon" class="text-sm text-gray-900"></p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Ngày hẹn trả:</label>
+              <p id="modalNgayHenTra" class="text-sm text-gray-900"></p>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Danh sách sách:</label>
+            <div class="overflow-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mã sách</th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tựa sách</th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Số lượng</th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody id="modalBooksTable" class="bg-white divide-y divide-gray-200"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     const tabBorrow = document.getElementById('tabBorrow');
     const tabReturn = document.getElementById('tabReturn');
+    const tabList = document.getElementById('tabList');
     const contentBorrow = document.getElementById('contentBorrow');
     const contentReturn = document.getElementById('contentReturn');
+    const contentList = document.getElementById('contentList');
     
     let currentMember = null;
     let currentBooks = [];
     let currentBorrowRecord = null;
+    let allBorrowTickets = [];
 
     // Tab switching
-    tabBorrow.addEventListener('click', () => {
-      contentBorrow.classList.remove('hidden');
-      contentReturn.classList.add('hidden');
-      tabBorrow.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-      tabReturn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-    });
-    
-    tabReturn.addEventListener('click', () => {
-      contentReturn.classList.remove('hidden');
+    function switchTab(activeTab, activeContent) {
+      // Hide all content
       contentBorrow.classList.add('hidden');
-      tabReturn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-      tabBorrow.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+      contentReturn.classList.add('hidden');
+      contentList.classList.add('hidden');
+      
+      // Remove active styles from all tabs
+      [tabBorrow, tabReturn, tabList].forEach(tab => {
+        tab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+        tab.classList.add('text-gray-600');
+      });
+      
+      // Show active content and style active tab
+      activeContent.classList.remove('hidden');
+      activeTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+      activeTab.classList.remove('text-gray-600');
+    }
+
+    tabBorrow.addEventListener('click', () => switchTab(tabBorrow, contentBorrow));
+    tabReturn.addEventListener('click', () => switchTab(tabReturn, contentReturn));
+    tabList.addEventListener('click', () => {
+      switchTab(tabList, contentList);
+      loadBorrowTickets();
     });
 
     // Search member functionality
@@ -333,24 +446,225 @@
       }
     });
 
-    // Allow Enter key to trigger search
-    document.getElementById('searchMember').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('btnSearchMember').click();
-      }
-    });
+    // Load and display borrow tickets
+    async function loadBorrowTickets(searchQuery = '') {
+      try {
+        const borrowResponse = await fetch('/api/phieumuon');
+        let borrowTickets = [];
+        
+        if (borrowResponse.ok) {
+          const data = await borrowResponse.json();
+          borrowTickets = data;
+        }
 
-    document.getElementById('searchBookBorrow').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('btnSearchBookBorrow').click();
-      }
-    });
+        // Filter by search query if provided
+        let filteredTickets = borrowTickets;
+        if (searchQuery) {
+          filteredTickets = borrowTickets.filter(ticket => 
+            ticket.MaPM.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            ticket.MaDG.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
 
-    document.getElementById('returnCode').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('btnLoadReturn').click();
+        // Get detailed information for each ticket
+        const ticketsWithDetails = await Promise.all(
+          filteredTickets.map(async (ticket) => {
+            try {
+              const detailResponse = await fetch(`/api/phieumuon/${ticket.MaPM}`);
+              if (detailResponse.ok) {
+                return await detailResponse.json();
+              }
+              return ticket;
+            } catch {
+              return ticket;
+            }
+          })
+        );
+
+        allBorrowTickets = ticketsWithDetails;
+        renderBorrowTicketsTable(ticketsWithDetails);
+      } catch (error) {
+        console.error('Error loading borrow tickets:', error);
+        renderBorrowTicketsTable([]);
       }
-    });
-  </script>
-</body>
+    }
+
+    // Render borrow tickets table
+    function renderBorrowTicketsTable(tickets) {
+      const tbody = document.getElementById('borrowTicketTable');
+      const emptyState = document.getElementById('emptyState');
+
+      if (tickets.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      tbody.innerHTML = tickets.map(ticket => {
+        const borrowDate = new Date(ticket.NgayMuon).toLocaleDateString('vi-VN');
+        const dueDate = new Date(ticket.NgayHenTra).toLocaleDateString('vi-VN');
+        const bookCount = ticket.books ? ticket.books.length : 0;
+        const statusClass = ticket.TrangThai === 'Đang mượn' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm font-medium text-gray-900">${ticket.MaPM}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${ticket.MaDG}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${ticket.HoTen || 'N/A'}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${borrowDate}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">${dueDate}</td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 text-xs rounded-full ${statusClass}">
+                ${ticket.TrangThai}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-900">${bookCount}</td>
+            <td class="px-4 py-3 text-sm">
+              <button onclick="viewBorrowTicketDetail('${ticket.MaPM}')" class="text-blue-600 hover:text-blue-800 mr-2" title="Xem chi tiết">
+                <span class="material-icons text-sm">visibility</span>
+              </button>
+              ${ticket.TrangThai === 'Đang mượn' ? `
+                <button onclick="returnBooks('${ticket.MaPM}')" class="text-green-600 hover:text-green-800" title="Trả sách">
+                  <span class="material-icons text-sm">keyboard_return</span>
+                </button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+        // View borrow ticket detail
+        async function viewBorrowTicketDetail(maPM) {
+          try {
+            const response = await fetch(`/api/phieumuon/${maPM}`);
+            if (response.ok) {
+              const ticket = await response.json();
+              
+              // Populate modal with ticket details
+              document.getElementById('modalMaPM').textContent = ticket.MaPM;
+              document.getElementById('modalMaDG').textContent = ticket.MaDG;
+              document.getElementById('modalHoTen').textContent = ticket.HoTen || 'N/A';
+              document.getElementById('modalNgayMuon').textContent = new Date(ticket.NgayMuon).toLocaleDateString('vi-VN');
+              document.getElementById('modalNgayHenTra').textContent = new Date(ticket.NgayHenTra).toLocaleDateString('vi-VN');
+              
+              // Set status with appropriate styling
+              const statusElement = document.getElementById('modalTrangThai');
+              statusElement.textContent = ticket.TrangThai;
+              statusElement.className = `text-sm px-2 py-1 rounded-full ${
+                ticket.TrangThai === 'Đang mượn' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+              }`;
+              
+              // Populate books table
+              const booksTableBody = document.getElementById('modalBooksTable');
+              booksTableBody.innerHTML = ticket.books.map(book => `
+                <tr>
+                  <td class="px-3 py-2 text-sm">${book.MaSach}</td>
+                  <td class="px-3 py-2 text-sm">${book.TuaSach}</td>
+                  <td class="px-3 py-2 text-sm">${book.SoLuong}</td>
+                  <td class="px-3 py-2 text-sm">
+                    <span class="px-2 py-1 text-xs rounded-full ${
+                      book.TrangThai === 'Đang mượn' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                    }">
+                      ${book.TrangThai}
+                    </span>
+                  </td>
+                </tr>
+              `).join('');
+              
+              // Show modal
+              document.getElementById('detailModal').classList.remove('hidden');
+              document.getElementById('detailModal').classList.add('flex');
+            } else {
+              alert('Không thể tải thông tin phiếu mượn');
+            }
+          } catch (error) {
+            alert('Lỗi khi tải thông tin: ' + error.message);
+          }
+        }
+
+        // Return books function
+        async function returnBooks(maPM) {
+          if (confirm('Xác nhận trả sách cho phiếu mượn ' + maPM + '?')) {
+            try {
+              const response = await fetch(`/api/tra/${maPM}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              const result = await response.json();
+              if (response.ok) {
+                alert('Trả sách thành công!');
+                loadBorrowTickets(); // Refresh the list
+              } else {
+                alert('Lỗi: ' + result.error);
+              }
+            } catch (error) {
+              alert('Lỗi khi trả sách: ' + error.message);
+            }
+          }
+        }
+
+        // Search borrow tickets
+        document.getElementById('btnSearchBorrowTicket').addEventListener('click', () => {
+          const searchQuery = document.getElementById('searchBorrowTicket').value.trim();
+          loadBorrowTickets(searchQuery);
+        });
+
+        // Refresh list
+        document.getElementById('btnRefreshList').addEventListener('click', () => {
+          document.getElementById('searchBorrowTicket').value = '';
+          loadBorrowTickets();
+        });
+
+        // Close modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+          document.getElementById('detailModal').classList.add('hidden');
+          document.getElementById('detailModal').classList.remove('flex');
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+          if (e.target === document.getElementById('detailModal')) {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('flex');
+          }
+        });
+
+        // Enter key support for search inputs
+        document.getElementById('searchMember').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            document.getElementById('btnSearchMember').click();
+          }
+        });
+
+        document.getElementById('searchBookBorrow').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            document.getElementById('btnSearchBookBorrow').click();
+          }
+        });
+
+        document.getElementById('returnCode').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            document.getElementById('btnLoadReturn').click();
+          }
+        });
+
+        document.getElementById('searchBorrowTicket').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            document.getElementById('btnSearchBorrowTicket').click();
+          }
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+          // Load initial data if needed
+          console.log('Library Management System - Borrow/Return page loaded');
+        });
+
+    </script>
+  </body>
 </html>

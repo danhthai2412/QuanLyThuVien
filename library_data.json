@@ -36,7 +36,7 @@
       "NhaXuatBan": "NXB Thông tin và Truyền thông",
       "NamXuatBan": 2023,
       "TheLoai": "Công nghệ thông tin",
-      "SoLuong": 5
+      "SoLuong": 4
     },
     {
       "MaSach": "S002",
@@ -45,7 +45,7 @@
       "NhaXuatBan": "NXB Đại học Quốc gia",
       "NamXuatBan": 2022,
       "TheLoai": "Công nghệ thông tin",
-      "SoLuong": 3
+      "SoLuong": 2
     },
     {
       "MaSach": "S003",
@@ -89,6 +89,20 @@
       "NgayMuon": "2024-01-10T10:15:00.000Z",
       "NgayHenTra": "2024-01-24T10:15:00.000Z",
       "TrangThai": "Đã trả"
+    },
+    {
+      "MaPM": "PM003",
+      "MaDG": "DG001",
+      "NgayMuon": "2025-05-31T14:04:26.543Z",
+      "NgayHenTra": "2025-06-14T14:04:26.543Z",
+      "TrangThai": "Đang mượn"
+    },
+    {
+      "MaPM": "PM004",
+      "MaDG": "DG001",
+      "NgayMuon": "2025-05-31T14:29:00.874Z",
+      "NgayHenTra": "2025-06-14T14:29:00.874Z",
+      "TrangThai": "Đang mượn"
     }
   ],
   "chitietmuon": [
@@ -115,6 +129,18 @@
       "MaSach": "S004",
       "SoLuong": 1,
       "TrangThai": "Đã trả"
+    },
+    {
+      "MaPM": "PM003",
+      "MaSach": "S001",
+      "SoLuong": 1,
+      "TrangThai": "Đang mượn"
+    },
+    {
+      "MaPM": "PM004",
+      "MaSach": "S002",
+      "SoLuong": 1,
+      "TrangThai": "Đang mượn"
     }
   ],
   "phieutra": [

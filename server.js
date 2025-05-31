@@ -407,6 +407,15 @@ app.get('/muontra', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'MuonTraSach.html'));
 });
 
+app.get('/api/phieumuon', async (req, res) => {
+  try {
+    const data = await readData();
+    res.json(data.phieumuon);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start server
 async function startServer() {
   await initializeDataFile();
