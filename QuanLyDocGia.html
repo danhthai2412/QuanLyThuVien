@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Độc giả - Thư viện</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg">
+    <div class="p-6">
+      <h1 class="text-xl font-bold text-blue-600">Thư viện</h1>
+    </div>
+    <nav class="px-6">
+      <ul class="space-y-2">
+        <li><a href="/" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">dashboard</span>Dashboard</a></li>
+        <li><a href="/docgia" class="flex items-center p-2 bg-gray-200 text-gray-900 rounded"><span class="material-icons mr-3">person</span>Quản lý độc giả</a></li>
+        <li><a href="/sach" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">menu_book</span>Quản lý sách</a></li>
+        <li><a href="/muon" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">assignment</span>Mượn sách</a></li>
+        <li><a href="/tra" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">assignment_return</span>Trả sách</a></li>
+        <li><a href="/cauhinh" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">settings</span>Cấu hình</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow p-4 flex justify-between items-center">
+      <h2 class="text-2xl font-semibold text-gray-800">Quản lý Độc giả</h2>
+      <!-- Button mở form -->
+      <button id="btnAdd" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Thêm Độc giả</button>
+    </header>
+
+    <!-- Content -->
+    <div class="p-6">
+      <!-- Search bar -->
+      <div class="mb-4 flex">
+        <input type="text" id="searchInput" placeholder="Tìm độc giả theo tên, mã, SDT..." 
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button id="btnSearch" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700">Tìm kiếm</button>
+      </div>
+
+      <!-- Table độc giả -->
+      <div class="bg-white shadow rounded-lg overflow-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã độc giả</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Họ và Tên</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày sinh</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giới tính</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SĐT</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="docgiaTable" class="bg-white divide-y divide-gray-200">
+            <!-- Dữ liệu sẽ được render bởi JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Thêm/Sửa Độc giả -->
+  <div id="modalForm" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+      <h3 id="formTitle" class="text-xl font-semibold mb-4">Thêm Độc giả</h3>
+      <form id="docgiaForm" class="space-y-4">
+        <div>
+          <label for="MaDG" class="block text-gray-700">Mã độc giả</label>
+          <input id="MaDG" name="MaDG" type="text" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div>
+          <label for="HoTen" class="block text-gray-700">Họ và Tên</label>
+          <input id="HoTen" name="HoTen" type="text" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="NgaySinh" class="block text-gray-700">Ngày sinh</label>
+            <input id="NgaySinh" name="NgaySinh" type="date" required 
+                   class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <label class="block text-gray-700">Giới tính</label>
+            <div class="mt-1 flex items-center">
+              <label class="inline-flex items-center mr-4">
+                <input type="radio" name="GioiTinh" value="M" required class="form-radio text-blue-600" />
+                <span class="ml-2">Nam</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" name="GioiTinh" value="F" required class="form-radio text-pink-600" />
+                <span class="ml-2">Nữ</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label for="SDT" class="block text-gray-700">Số điện thoại</label>
+          <input id="SDT" name="SDT" type="text" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div>
+          <label for="Email" class="block text-gray-700">Email</label>
+          <input id="Email" name="Email" type="email" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" id="btnCancel" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Hủy</button>
+          <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript for modal and CRUD operations -->
+  <script>
+    // DOM elements
+    const modal = document.getElementById('modalForm');
+    const btnAdd = document.getElementById('btnAdd');
+    const btnCancel = document.getElementById('btnCancel');
+    const form = document.getElementById('docgiaForm');
+    const formTitle = document.getElementById('formTitle');
+    const tableBody = document.getElementById('docgiaTable');
+
+    let isEdit = false;
+    let editId = null;
+
+    // Open modal
+    btnAdd.addEventListener('click', () => {
+      isEdit = false;
+      form.reset();
+      formTitle.textContent = 'Thêm Độc giả';
+      modal.classList.remove('hidden');
+    });
+
+    // Close modal
+    btnCancel.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    // Handle form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        MaDG: form.MaDG.value,
+        HoTen: form.HoTen.value,
+        NgaySinh: form.NgaySinh.value,
+        GioiTinh: form.GioiTinh.value,
+        SDT: form.SDT.value,
+        Email: form.Email.value
+      };
+      if (isEdit) {
+        await fetch(`/api/docgia/${editId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      } else {
+        await fetch('/api/docgia', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      }
+      modal.classList.add('hidden');
+      loadData();
+    });
+
+    // Load data
+    async function loadData() {
+      const res = await fetch('/api/docgia');
+      const items = await res.json();
+      tableBody.innerHTML = items.map(dg => `
+        <tr>
+          <td class="px-4 py-2">${dg.MaDG}</td>
+          <td class="px-4 py-2">${dg.HoTen}</td>
+          <td class="px-4 py-2">${dg.NgaySinh.split('T')[0]}</td>
+          <td class="px-4 py-2">${dg.GioiTinh === 'M' ? 'Nam' : 'Nữ'}</td>
+          <td class="px-4 py-2">${dg.SDT}</td>
+          <td class="px-4 py-2">${dg.Email}</td>
+          <td class="px-4 py-2 text-center space-x-2">
+            <button onclick="editDG('${dg.MaDG}')" class="p-2 bg-yellow-100 rounded hover:bg-yellow-200"><span class="material-icons text-yellow-600">edit</span></button>
+            <button onclick="deleteDG('${dg.MaDG}')" class="p-2 bg-red-100 rounded hover:bg-red-200"><span class="material-icons text-red-600">delete</span></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Edit
+    async function editDG(id) {
+      const res = await fetch(`/api/docgia/${id}`);
+      const dg = await res.json();
+      isEdit = true;
+      editId = id;
+      form.MaDG.value = dg.MaDG;
+      form.HoTen.value = dg.HoTen;
+      form.NgaySinh.value = dg.NgaySinh.split('T')[0];
+      form.GioiTinh.value = dg.GioiTinh;
+      form.SDT.value = dg.SDT;
+      form.Email.value = dg.Email;
+      formTitle.textContent = 'Chỉnh sửa Độc giả';
+      modal.classList.remove('hidden');
+    }
+
+    // Delete
+    async function deleteDG(id) {
+      if (confirm('Bạn có chắc muốn xóa Độc giả này?')) {
+        await fetch(`/api/docgia/${id}`, { method: 'DELETE' });
+        loadData();
+      }
+    }
+
+    // Initial load
+    loadData();
+  </script>
+</body>
+</html>

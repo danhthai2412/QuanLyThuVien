@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mượn / Trả Sách - Thư viện</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg">
+    <div class="p-6">
+      <h1 class="text-xl font-bold text-blue-600">Thư viện</h1>
+    </div>
+    <nav class="px-6">
+      <ul class="space-y-2">
+        <li><a href="/" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">dashboard</span>Dashboard</a></li>
+        <li><a href="/docgia" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">person</span>Quản lý độc giả</a></li>
+        <li><a href="/sach" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">menu_book</span>Quản lý sách</a></li>
+        <li><a href="/muontra" class="flex items-center p-2 bg-gray-200 text-gray-900 rounded"><span class="material-icons mr-3">swap_horiz</span>Mượn / Trả sách</a></li>
+        <li><a href="/cauhinh" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">settings</span>Cấu hình</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header with tabs -->
+    <header class="bg-white shadow p-4 flex items-center">
+      <h2 class="text-2xl font-semibold text-gray-800 mr-8">Mượn / Trả sách</h2>
+      <button id="tabBorrow" class="px-4 py-2 text-blue-600 border-b-2 border-blue-600 mr-4">Mượn sách</button>
+      <button id="tabReturn" class="px-4 py-2 text-gray-600 hover:text-blue-600">Trả sách</button>
+    </header>
+
+    <!-- Content -->
+    <div id="contentBorrow" class="p-6">
+      <!-- Borrow Section: Search by reader ID -->
+      <div class="mb-4 flex items-center space-x-2">
+        <input type="text" id="searchMember" placeholder="Nhập mã độc giả..." class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button id="btnSearchMember" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700">Tìm độc giả</button>
+      </div>
+      <div id="memberInfo" class="mb-6 p-4 bg-white rounded-lg shadow hidden">
+        <p class="text-gray-800"><span class="font-semibold">Mã độc giả:</span> <span id="memberId"></span></p>
+        <p class="text-gray-800"><span class="font-semibold">Họ tên:</span> <span id="memberName"></span></p>
+      </div>
+      <div class="mb-4 flex">
+        <input type="text" id="searchBookBorrow" placeholder="Tìm sách..." class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button id="btnSearchBookBorrow" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700">Tìm kiếm sách</button>
+      </div>
+      <div class="bg-white shadow rounded-lg overflow-auto mb-4">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2"><input type="checkbox" id="selectAllBorrow" /></th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã sách</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tựa sách</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tồn kho</th>
+            </tr>
+          </thead>
+          <tbody id="borrowTable" class="bg-white divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+      <div class="text-right">
+        <button id="btnConfirmBorrow" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Xác nhận mượn</button>
+      </div>
+    </div>
+
+    <div id="contentReturn" class="p-6 hidden">
+      <!-- Return Section -->
+      <div class="mb-4 flex items-center space-x-2">
+        <input type="text" id="returnCode" placeholder="Nhập mã phiếu mượn..." class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button id="btnLoadReturn" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700">Tải thông tin</button>
+      </div>
+      <div id="returnDetails" class="bg-white shadow rounded-lg p-4 mb-4 hidden">
+        <h3 class="text-lg font-medium mb-2">Chi tiết phiếu</h3>
+        <div class="overflow-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã sách</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tựa sách</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày hẹn trả</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="returnTable" class="bg-white divide-y divide-gray-200"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-4">
+        <button id="btnProcessReturn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Xác nhận trả</button>
+        <button id="btnProcessExtend" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">Gia hạn</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabBorrow = document.getElementById('tabBorrow');
+    const tabReturn = document.getElementById('tabReturn');
+    const contentBorrow = document.getElementById('contentBorrow');
+    const contentReturn = document.getElementById('contentReturn');
+
+    tabBorrow.addEventListener('click', () => {
+      contentBorrow.classList.remove('hidden');
+      contentReturn.classList.add('hidden');
+      tabBorrow.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+      tabReturn.classList.remove('text-blue-600', 'border-b-2');
+    });
+    tabReturn.addEventListener('click', () => {
+      contentReturn.classList.remove('hidden');
+      contentBorrow.classList.add('hidden');
+      tabReturn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+      tabBorrow.classList.remove('text-blue-600', 'border-b-2');
+    });
+
+    // TODO: fetch reader by ID on btnSearchMember click
+    // TODO: fetch books, process borrow/return actions
+  </script>
+</body>
+</html>

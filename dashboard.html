@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Quản lý Thư viện</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gray-100 flex">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg">
+    <div class="p-6">
+      <h1 class="text-xl font-bold text-blue-600">Thư viện</h1>
+    </div>
+    <nav class="px-6">
+      <ul class="space-y-2">
+        <li><a href="/" class="flex items-center p-2 bg-gray-200 text-gray-900 rounded"><span class="material-icons mr-3">dashboard</span>Dashboard</a></li>
+        <li><a href="/docgia" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">person</span>Quản lý độc giả</a></li>
+        <li><a href="/sach" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">menu_book</span>Quản lý sách</a></li>
+        <li><a href="/muontra" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">swap_horiz</span>Mượn / Trả sách</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow p-6">
+      <h2 class="text-3xl font-semibold text-gray-800">Dashboard</h2>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="p-6 grid grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-lg shadow flex items-center">
+        <div class="p-4 bg-blue-100 rounded-full">
+          <span class="material-icons text-blue-600">menu_book</span>
+        </div>
+        <div class="ml-4">
+          <p class="text-gray-500">Tổng sách</p>
+          <p id="totalBooks" class="text-3xl font-bold text-gray-800">0</p>
+        </div>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow flex items-center">
+        <div class="p-4 bg-green-100 rounded-full">
+          <span class="material-icons text-green-600">person</span>
+        </div>
+        <div class="ml-4">
+          <p class="text-gray-500">Tổng độc giả</p>
+          <p id="totalReaders" class="text-3xl font-bold text-gray-800">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Functions Quick Links -->
+    <div class="p-6 grid grid-cols-3 gap-6">
+      <a href="/docgia" class="block bg-white rounded-lg shadow p-6 text-center hover:bg-gray-50 transition-colors">
+        <span class="material-icons text-5xl text-blue-500">person</span>
+        <p class="mt-4 text-lg font-medium text-gray-800">Quản lý độc giả</p>
+      </a>
+      <a href="/sach" class="block bg-white rounded-lg shadow p-6 text-center hover:bg-gray-50 transition-colors">
+        <span class="material-icons text-5xl text-blue-500">menu_book</span>
+        <p class="mt-4 text-lg font-medium text-gray-800">Quản lý sách</p>
+      </a>
+      <a href="/muontra" class="block bg-white rounded-lg shadow p-6 text-center hover:bg-gray-50 transition-colors">
+        <span class="material-icons text-5xl text-blue-500">swap_horiz</span>
+        <p class="mt-4 text-lg font-medium text-gray-800">Mượn / Trả sách</p>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Load dashboard statistics
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/dashboard/stats');
+        const stats = await response.json();
+        
+        document.getElementById('totalBooks').textContent = stats.totalBooks;
+        document.getElementById('totalReaders').textContent = stats.totalReaders;
+      } catch (error) {
+        console.error('Error loading statistics:', error);
+      }
+    }
+
+    // Load stats when page loads
+    loadStats();
+  </script>
+</body>
+</html>
