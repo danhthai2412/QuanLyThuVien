@@ -193,3 +193,162 @@
         alert('Vui lòng tìm độc giả trước');
         return;
       }
+
+      const checkedBoxes = document.querySelectorAll('.book-checkbox:checked');
+      if (checkedBoxes.length === 0) {
+        alert('Vui lòng chọn ít nhất một cuốn sách');
+        return;
+      }
+
+      const books = [];
+      for (const checkbox of checkedBoxes) {
+        const bookId = checkbox.dataset.bookId;
+        const quantityInput = document.querySelector(`.quantity-input[data-book-id="${bookId}"]`);
+        const quantity = parseInt(quantityInput.value);
+
+        if (quantity > 0) {
+          books.push({
+            MaSach: bookId,
+            SoLuong: quantity
+          });
+        }
+      }
+
+      if (books.length === 0) {
+        alert('Vui lòng nhập số lượng hợp lệ');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/muon', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            MaDG: currentMember.MaDG,
+            books: books
+          })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert(`Mượn sách thành công! Mã phiếu mượn: ${result.MaPM}`);
+          // Reset form
+          document.getElementById('searchMember').value = '';
+          document.getElementById('searchBookBorrow').value = '';
+          document.getElementById('memberInfo').classList.add('hidden');
+          document.getElementById('borrowTable').innerHTML = '';
+          currentMember = null;
+          currentBooks = [];
+        } else {
+          alert('Lỗi: ' + result.error);
+        }
+      } catch (error) {
+        alert('Lỗi khi mượn sách: ' + error.message);
+      }
+    });
+
+    // Load return information
+    document.getElementById('btnLoadReturn').addEventListener('click', async () => {
+      const returnCode = document.getElementById('returnCode').value.trim();
+      if (!returnCode) {
+        alert('Vui lòng nhập mã phiếu mượn');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/phieumuon/${returnCode}`);
+        if (response.ok) {
+          const borrowRecord = await response.json();
+          currentBorrowRecord = borrowRecord;
+          
+          // Display return info
+          document.getElementById('returnMemberName').textContent = borrowRecord.HoTen;
+          document.getElementById('returnBorrowDate').textContent = new Date(borrowRecord.NgayMuon).toLocaleDateString('vi-VN');
+          document.getElementById('returnDueDate').textContent = new Date(borrowRecord.NgayHenTra).toLocaleDateString('vi-VN');
+          
+          // Display books table
+          const tbody = document.getElementById('returnTable');
+          tbody.innerHTML = borrowRecord.books.map(book => `
+            <tr>
+              <td class="px-4 py-2">${book.MaSach}</td>
+              <td class="px-4 py-2">${book.TuaSach}</td>
+              <td class="px-4 py-2">${book.SoLuong}</td>
+              <td class="px-4 py-2">
+                <span class="px-2 py-1 text-xs rounded-full ${book.TrangThai === 'Đang mượn' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                  ${book.TrangThai}
+                </span>
+              </td>
+            </tr>
+          `).join('');
+          
+          document.getElementById('returnDetails').classList.remove('hidden');
+        } else {
+          alert('Không tìm thấy phiếu mượn');
+          document.getElementById('returnDetails').classList.add('hidden');
+          currentBorrowRecord = null;
+        }
+      } catch (error) {
+        alert('Lỗi khi tải thông tin: ' + error.message);
+      }
+    });
+
+    // Process return
+    document.getElementById('btnProcessReturn').addEventListener('click', async () => {
+      if (!currentBorrowRecord) {
+        alert('Vui lòng tải thông tin phiếu mượn trước');
+        return;
+      }
+
+      if (currentBorrowRecord.TrangThai === 'Đã trả') {
+        alert('Phiếu mượn này đã được trả');
+        return;
+      }
+
+      if (confirm('Xác nhận trả sách?')) {
+        try {
+          const response = await fetch(`/api/tra/${currentBorrowRecord.MaPM}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          if (response.ok) {
+            alert('Trả sách thành công!');
+            // Reset form
+            document.getElementById('returnCode').value = '';
+            document.getElementById('returnDetails').classList.add('hidden');
+            currentBorrowRecord = null;
+          } else {
+            alert('Lỗi: ' + result.error);
+          }
+        } catch (error) {
+          alert('Lỗi khi trả sách: ' + error.message);
+        }
+      }
+    });
+
+    // Allow Enter key to trigger search
+    document.getElementById('searchMember').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btnSearchMember').click();
+      }
+    });
+
+    document.getElementById('searchBookBorrow').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btnSearchBookBorrow').click();
+      }
+    });
+
+    document.getElementById('returnCode').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btnLoadReturn').click();
+      }
+    });
+  </script>
+</body>
+</html>
