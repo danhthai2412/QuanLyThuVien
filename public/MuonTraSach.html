@@ -78,6 +78,7 @@
           <p><span class="font-semibold">Độc giả:</span> <span id="returnMemberName"></span></p>
           <p><span class="font-semibold">Ngày mượn:</span> <span id="returnBorrowDate"></span></p>
           <p><span class="font-semibold">Ngày hẹn trả:</span> <span id="returnDueDate"></span></p>
+          <p><span class="font-semibold">Trạng thái:</span> <span id="returnStatus"></span></p>
         </div>
         <div class="overflow-auto">
           <table class="min-w-full divide-y divide-gray-200">
@@ -168,7 +169,7 @@
       const tbody = document.getElementById('borrowTable');
       tbody.innerHTML = currentBooks.map(book => `
         <tr>
-          <td class="px-4 py-2"><input type="checkbox" class="book-checkbox" data-book-id="${book.MaSach}" /></td>
+          <td class="px-4 py-2"><input type="checkbox" class="book-checkbox" data-book-id="${book.MaSach}" ${book.SoLuong === 0 ? 'disabled' : ''} /></td>
           <td class="px-4 py-2">${book.MaSach}</td>
           <td class="px-4 py-2">${book.TuaSach}</td>
           <td class="px-4 py-2">${book.SoLuong}</td>
@@ -183,7 +184,7 @@
 
     // Select all functionality
     document.getElementById('selectAllBorrow').addEventListener('change', (e) => {
-      const checkboxes = document.querySelectorAll('.book-checkbox');
+      const checkboxes = document.querySelectorAll('.book-checkbox:not([disabled])');
       checkboxes.forEach(cb => cb.checked = e.target.checked);
     });
 
@@ -267,6 +268,7 @@
           document.getElementById('returnMemberName').textContent = borrowRecord.HoTen;
           document.getElementById('returnBorrowDate').textContent = new Date(borrowRecord.NgayMuon).toLocaleDateString('vi-VN');
           document.getElementById('returnDueDate').textContent = new Date(borrowRecord.NgayHenTra).toLocaleDateString('vi-VN');
+          document.getElementById('returnStatus').textContent = borrowRecord.TrangThai;
           
           // Display books table
           const tbody = document.getElementById('returnTable');
