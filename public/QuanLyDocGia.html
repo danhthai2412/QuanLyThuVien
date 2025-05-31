@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Độc giả - Thư viện</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gray-100 flex">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg">
+    <div class="p-6">
+      <h1 class="text-xl font-bold text-blue-600">Thư viện</h1>
+    </div>
+    <nav class="px-6">
+      <ul class="space-y-2">
+        <li><a href="/" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">dashboard</span>Dashboard</a></li>
+        <li><a href="/docgia" class="flex items-center p-2 bg-gray-200 text-gray-900 rounded"><span class="material-icons mr-3">person</span>Quản lý độc giả</a></li>
+        <li><a href="/sach" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">menu_book</span>Quản lý sách</a></li>
+        <li><a href="/muontra" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">assignment</span>Mượn/Trả sách</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow p-4 flex justify-between items-center">
+      <h2 class="text-2xl font-semibold text-gray-800">Quản lý Độc giả</h2>
+      <!-- Button mở form -->
+      <button id="btnAdd" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Thêm Độc giả</button>
+    </header>
+
+    <!-- Content -->
+    <div class="p-6">
+      <!-- Search bar -->
+      <div class="mb-4 flex">
+        <input type="text" id="searchInput" placeholder="Tìm độc giả theo tên, mã, SDT..." 
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button id="btnSearch" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700">Tìm kiếm</button>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="loading" class="hidden text-center py-4">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p class="mt-2 text-gray-600">Đang tải...</p>
+      </div>
+
+      <!-- Error message -->
+      <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <span id="errorText"></span>
+      </div>
+
+      <!-- Success message -->
+      <div id="successMessage" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <span id="successText"></span>
+      </div>
+
+      <!-- Table độc giả -->
+      <div class="bg-white shadow rounded-lg overflow-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã độc giả</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Họ và Tên</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày sinh</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giới tính</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SĐT</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="docgiaTable" class="bg-white divide-y divide-gray-200">
+            <!-- Dữ liệu sẽ được render bởi JavaScript -->
+          </tbody>
+        </table>
+        
+        <!-- Empty state -->
+        <div id="emptyState" class="hidden text-center py-8">
+          <div class="text-gray-400 mb-2">
+            <span class="material-icons text-6xl">person_off</span>
+          </div>
+          <p class="text-gray-500">Không có độc giả nào</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Thêm/Sửa Độc giả -->
+  <div id="modalForm" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 mx-4">
+      <h3 id="formTitle" class="text-xl font-semibold mb-4">Thêm Độc giả</h3>
+      <form id="docgiaForm" class="space-y-4">
+        <div>
+          <label for="MaDG" class="block text-gray-700 font-medium">Mã độc giả</label>
+          <input id="MaDG" name="MaDG" type="text" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                 placeholder="Để trống để tự động tạo mã" />
+        </div>
+        <div>
+          <label for="HoTen" class="block text-gray-700 font-medium">Họ và Tên *</label>
+          <input id="HoTen" name="HoTen" type="text" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                 placeholder="Nhập họ tên đầy đủ" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="NgaySinh" class="block text-gray-700 font-medium">Ngày sinh *</label>
+            <input id="NgaySinh" name="NgaySinh" type="date" required 
+                   class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <label class="block text-gray-700 font-medium">Giới tính *</label>
+            <div class="mt-1 flex items-center">
+              <label class="inline-flex items-center mr-4">
+                <input type="radio" name="GioiTinh" value="M" required class="form-radio text-blue-600" />
+                <span class="ml-2">Nam</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" name="GioiTinh" value="F" required class="form-radio text-pink-600" />
+                <span class="ml-2">Nữ</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label for="SDT" class="block text-gray-700 font-medium">Số điện thoại *</label>
+          <input id="SDT" name="SDT" type="tel" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                 placeholder="Nhập số điện thoại" />
+        </div>
+        <div>
+          <label for="Email" class="block text-gray-700 font-medium">Email *</label>
+          <input id="Email" name="Email" type="email" required 
+                 class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                 placeholder="Nhập địa chỉ email" />
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" id="btnCancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">Hủy</button>
+          <button type="submit" id="btnSave" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <span id="saveText">Lưu</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 mx-4 max-w-sm w-full">
+      <h3 class="text-lg font-semibold mb-4">Xác nhận</h3>
+      <p id="confirmMessage" class="text-gray-600 mb-6"></p>
+      <div class="flex justify-end space-x-4">
+        <button id="btnConfirmCancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">Hủy</button>
+        <button id="btnConfirmOk" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for modal and CRUD operations -->
+  <script>
+    // DOM elements
+    const modal = document.getElementById('modalForm');
+    const confirmModal = document.getElementById('confirmModal');
+    const btnAdd = document.getElementById('btnAdd');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnConfirmCancel = document.getElementById('btnConfirmCancel');
+    const btnConfirmOk = document.getElementById('btnConfirmOk');
+    const form = document.getElementById('docgiaForm');
+    const formTitle = document.getElementById('formTitle');
+    const tableBody = document.getElementById('docgiaTable');
+    const searchInput = document.getElementById('searchInput');
+    const btnSearch = document.getElementById('btnSearch');
+    const loading = document.getElementById('loading');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const emptyState = document.getElementById('emptyState');
+    const saveText = document.getElementById('saveText');
+    const confirmMessage = document.getElementById('confirmMessage');
+
+    let isEdit = false;
+    let editId = null;
+    let deleteId = null;
+
+    // Utility functions
+    function showLoading() {
+      loading.classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      loading.classList.add('hidden');
+    }
+
+    function showError(message) {
+      document.getElementById('errorText').textContent = message;
+      errorMessage.classList.remove('hidden');
+      setTimeout(() => {
+        errorMessage.classList.add('hidden');
+      }, 5000);
+    }
+
+    function showSuccess(message) {
+      document.getElementById('successText').textContent = message;
+      successMessage.classList.remove('hidden');
+      setTimeout(() => {
+        successMessage.classList.add('hidden');
+      }, 3000);
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('vi-VN');
+    }
+
+    function formatDateForInput(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    }
+
+    // Modal functions
+    function openModal() {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      form.reset();
+      isEdit = false;
+      editId = null;
+    }
+
+    function openConfirmModal(message, callback) {
+      confirmMessage.textContent = message;
+      confirmModal.classList.remove('hidden');
+      confirmModal.classList.add('flex');
+      
+      btnConfirmOk.onclick = () => {
+        closeConfirmModal();
+        callback();
+      };
+    }
+
+    function closeConfirmModal() {
+      confirmModal.classList.add('hidden');
+      confirmModal.classList.remove('flex');
+    }
+
+    // Event listeners
+    btnAdd.addEventListener('click', () => {
+      isEdit = false;
+      form.reset();
+      formTitle.textContent = 'Thêm Độc giả';
+      saveText.textContent = 'Lưu';
+      document.getElementById('MaDG').readOnly = false;
+      openModal();
+    });
+
+    btnCancel.addEventListener('click', closeModal);
+    btnConfirmCancel.addEventListener('click', closeConfirmModal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    confirmModal.addEventListener('click', (e) => {
+      if (e.target === confirmModal) {
+        closeConfirmModal();
+      }
+    });
+
+    // Search functionality
+    btnSearch.addEventListener('click', handleSearch);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    });
+
+    async function handleSearch() {
+      const query = searchInput.value.trim();
+      await loadData(query);
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitButton = document.getElementById('btnSave');
+      const originalText = saveText.textContent;
+      
+      try {
+        submitButton.disabled = true;
+        saveText.textContent = 'Đang lưu...';
+        
+        const formData = new FormData(form);
+        const data = {
+          MaDG: formData.get('MaDG') || undefined,
+          HoTen: formData.get('HoTen'),
+          NgaySinh: formData.get('NgaySinh'),
+          GioiTinh: formData.get('GioiTinh'),
+          SDT: formData.get('SDT'),
+          Email: formData.get('Email')
+        };
+
+        let response;
+        if (isEdit) {
+          response = await fetch(`/api/docgia/${editId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        } else {
+          response = await fetch('/api/docgia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        }
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Có lỗi xảy ra');
+        }
+
+        showSuccess(isEdit ? 'Cập nhật độc giả thành công!' : 'Thêm độc giả thành công!');
+        closeModal();
+        await loadData();
+        
+      } catch (error) {
+        console.error('Error:', error);
+        showError(error.message || 'Có lỗi xảy ra khi lưu dữ liệu');
+      } finally {
+        submitButton.disabled = false;
+        saveText.textContent = originalText;
+      }
+    });
+
+    // Load data function
+    async function loadData(searchQuery = '') {
+      try {
+        showLoading();
+        
+        let url = '/api/docgia';
+        if (searchQuery) {
+          url += `?q=${encodeURIComponent(searchQuery)}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error('Không thể tải dữ liệu');
+        }
+        
+        const docgiaList = await response.json();
+        
+        if (docgiaList.length === 0) {
+          tableBody.innerHTML = '';
+          emptyState.classList.remove('hidden');
+        } else {
+          emptyState.classList.add('hidden');
+          tableBody.innerHTML = docgiaList.map(dg => `
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2 font-medium">${dg.MaDG}</td>
+              <td class="px-4 py-2">${dg.HoTen}</td>
+              <td class="px-4 py-2">${formatDate(dg.NgaySinh)}</td>
+              <td class="px-4 py-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${dg.GioiTinh === 'M' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}">
+                  ${dg.GioiTinh === 'M' ? 'Nam' : 'Nữ'}
+                </span>
+              </td>
+              <td class="px-4 py-2">${dg.SDT}</td>
+              <td class="px-4 py-2">${dg.Email}</td>
+              <td class="px-4 py-2 text-center">
+                <div class="flex justify-center space-x-2">
+                  <button onclick="editDG('${dg.MaDG}')" 
+                          class="p-2 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors"
+                          title="Chỉnh sửa">
+                    <span class="material-icons text-yellow-600 text-sm">edit</span>
+                  </button>
+                  <button onclick="deleteDG('${dg.MaDG}')" 
+                          class="p-2 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+                          title="Xóa">
+                    <span class="material-icons text-red-600 text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
+        
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showError('Không thể tải dữ liệu độc giả');
+        tableBody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Edit function
+    async function editDG(id) {
+      try {
+        showLoading();
+        
+        const response = await fetch(`/api/docgia/${id}`);
+        
+        if (!response.ok) {
+          throw new Error('Không thể tải thông tin độc giả');
+        }
+        
+        const dg = await response.json();
+        
+        isEdit = true;
+        editId = id;
+        
+        // Fill form with data
+        document.getElementById('MaDG').value = dg.MaDG;
+        document.getElementById('MaDG').readOnly = true;
+        document.getElementById('HoTen').value = dg.HoTen;
+        document.getElementById('NgaySinh').value = formatDateForInput(dg.NgaySinh);
+        document.querySelector(`input[name="GioiTinh"][value="${dg.GioiTinh}"]`).checked = true;
+        document.getElementById('SDT').value = dg.SDT;
+        document.getElementById('Email').value = dg.Email;
+        
+        formTitle.textContent = 'Chỉnh sửa Độc giả';
+        saveText.textContent = 'Cập nhật';
+        
+        openModal();
+        
+      } catch (error) {
+        console.error('Error loading reader data:', error);
+        showError('Không thể tải thông tin độc giả');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Delete function
+    async function deleteDG(id) {
+      deleteId = id;
+      openConfirmModal('Bạn có chắc chắn muốn xóa độc giả này?', async () => {
+        try {
+          showLoading();
+          
+          const response = await fetch(`/api/docgia/${deleteId}`, {
+            method: 'DELETE'
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.error || 'Không thể xóa độc giả');
+          }
+          
+          showSuccess('Xóa độc giả thành công!');
+          await loadData();
+          
+        } catch (error) {
+          console.error('Error deleting reader:', error);
+          showError(error.message || 'Không thể xóa độc giả');
+        } finally {
+          hideLoading();
+          deleteId = null;
+        }
+      });
+    }
+
+    // Make functions global for inline onclick handlers
+    window.editDG = editDG;
+    window.deleteDG = deleteDG;
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+    });
+  </script>
+</body>
+</html>
