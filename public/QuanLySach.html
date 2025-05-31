@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Sách - Thư viện</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gray-100 flex">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg">
+    <div class="p-6">
+      <h1 class="text-xl font-bold text-blue-600">Thư viện</h1>
+    </div>
+    <nav class="px-6">
+      <ul class="space-y-2">
+        <li><a href="/" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">dashboard</span>Dashboard</a></li>
+        <li><a href="/docgia" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">person</span>Quản lý độc giả</a></li>
+        <li><a href="/sach" class="flex items-center p-2 bg-gray-200 text-gray-900 rounded"><span class="material-icons mr-3">menu_book</span>Quản lý sách</a></li>
+        <li><a href="/muontra" class="flex items-center p-2 text-gray-700 rounded hover:bg-gray-200"><span class="material-icons mr-3">assignment</span>Mượn/Trả sách</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow p-4 flex justify-between items-center">
+      <h2 class="text-2xl font-semibold text-gray-800">Quản lý Sách</h2>
+      <button id="btnAddBook" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        <span class="material-icons mr-2 text-sm">add</span>
+        Thêm Sách
+      </button>
+    </header>
+
+    <!-- Content -->
+    <div class="p-6">
+      <!-- Search bar -->
+      <div class="mb-6 flex gap-2">
+        <input type="text" id="searchBook" placeholder="Tìm sách theo mã, tựa, tác giả..." 
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" />
+        <button id="btnSearchBook" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+          <span class="material-icons mr-1 text-sm">search</span>
+          Tìm kiếm
+        </button>
+        <button id="btnResetSearch" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+          <span class="material-icons text-sm">refresh</span>
+        </button>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="loadingIndicator" class="hidden text-center py-4">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p class="mt-2 text-gray-600">Đang tải...</p>
+      </div>
+
+      <!-- Error message -->
+      <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <span id="errorText"></span>
+      </div>
+
+      <!-- Success message -->
+      <div id="successMessage" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <span id="successText"></span>
+      </div>
+
+      <!-- Table sách -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã sách</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tựa sách</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tác giả</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thể loại</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="bookTable" class="bg-white divide-y divide-gray-200">
+              <!-- Dữ liệu sẽ được render qua JS -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Empty state -->
+        <div id="emptyState" class="hidden text-center py-8">
+          <span class="material-icons text-gray-400 text-4xl">library_books</span>
+          <p class="mt-2 text-gray-500">Không có sách nào</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Thêm/Sửa Sách -->
+  <div id="modalBookForm" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 m-4 max-h-screen overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="bookFormTitle" class="text-xl font-semibold text-gray-800">Thêm Sách</h3>
+        <button id="btnCloseModal" class="text-gray-400 hover:text-gray-600">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      
+      <form id="bookForm" class="space-y-4">
+        <div>
+          <label for="MaSach" class="block text-sm font-medium text-gray-700 mb-1">Mã sách <span class="text-red-500">*</span></label>
+          <input id="MaSach" name="MaSach" type="text" required 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" 
+                 placeholder="Nhập mã sách" />
+        </div>
+        
+        <div>
+          <label for="TuaSach" class="block text-sm font-medium text-gray-700 mb-1">Tựa sách <span class="text-red-500">*</span></label>
+          <input id="TuaSach" name="TuaSach" type="text" required 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" 
+                 placeholder="Nhập tựa sách" />
+        </div>
+        
+        <div>
+          <label for="TacGia" class="block text-sm font-medium text-gray-700 mb-1">Tác giả</label>
+          <input id="TacGia" name="TacGia" type="text" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" 
+                 placeholder="Nhập tên tác giả" />
+        </div>
+        
+        <div>
+          <label for="TheLoai" class="block text-sm font-medium text-gray-700 mb-1">Thể loại</label>
+          <input id="TheLoai" name="TheLoai" type="text" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" 
+                 placeholder="Nhập thể loại" />
+        </div>
+        
+        <div>
+          <label for="SoLuong" class="block text-sm font-medium text-gray-700 mb-1">Số lượng <span class="text-red-500">*</span></label>
+          <input id="SoLuong" name="SoLuong" type="number" min="0" value="0" required 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent" 
+                 placeholder="Nhập số lượng" />
+        </div>
+        
+        <div class="flex justify-end space-x-3 pt-6 border-t">
+          <button type="button" id="btnBookCancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+            Hủy
+          </button>
+          <button type="submit" id="btnBookSave" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <span class="material-icons mr-1 text-sm">save</span>
+            Lưu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
+      <div class="flex items-center mb-4">
+        <span class="material-icons text-red-500 mr-3">warning</span>
+        <h3 class="text-lg font-semibold text-gray-800">Xác nhận xóa</h3>
+      </div>
+      <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa sách này? Hành động này không thể hoàn tác.</p>
+      <div class="flex justify-end space-x-3">
+        <button id="btnCancelDelete" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+          Hủy
+        </button>
+        <button id="btnConfirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+          Xóa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM elements
+    const modal = document.getElementById('modalBookForm');
+    const confirmModal = document.getElementById('confirmModal');
+    const btnAdd = document.getElementById('btnAddBook');
+    const btnCancel = document.getElementById('btnBookCancel');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const form = document.getElementById('bookForm');
+    const title = document.getElementById('bookFormTitle');
+    const table = document.getElementById('bookTable');
+    const searchInput = document.getElementById('searchBook');
+    const btnSearch = document.getElementById('btnSearchBook');
+    const btnResetSearch = document.getElementById('btnResetSearch');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const emptyState = document.getElementById('emptyState');
+
+    let isEdit = false;
+    let editId = null;
+    let deleteId = null;
+
+    // Utility functions
+    function showLoading() {
+      loadingIndicator.classList.remove('hidden');
+      table.classList.add('hidden');
+      emptyState.classList.add('hidden');
+    }
+
+    function hideLoading() {
+      loadingIndicator.classList.add('hidden');
+    }
+
+    function showError(message) {
+      document.getElementById('errorText').textContent = message;
+      errorMessage.classList.remove('hidden');
+      setTimeout(() => errorMessage.classList.add('hidden'), 5000);
+    }
+
+    function showSuccess(message) {
+      document.getElementById('successText').textContent = message;
+      successMessage.classList.remove('hidden');
+      setTimeout(() => successMessage.classList.add('hidden'), 3000);
+    }
+
+    function openModal() {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = 'auto';
+    }
+
+    function openConfirmModal() {
+      confirmModal.classList.remove('hidden');
+      confirmModal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      confirmModal.classList.add('hidden');
+      confirmModal.classList.remove('flex');
+      deleteId = null;
+    }
+
+    // Event listeners
+    btnAdd.addEventListener('click', () => {
+      isEdit = false;
+      editId = null;
+      form.reset();
+      title.textContent = 'Thêm Sách';
+      document.getElementById('MaSach').disabled = false;
+      openModal();
+    });
+
+    btnCancel.addEventListener('click', closeModal);
+    btnCloseModal.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    confirmModal.addEventListener('click', (e) => {
+      if (e.target === confirmModal) {
+        closeConfirmModal();
+      }
+    });
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const data = {
+        MaSach: formData.get('MaSach').trim(),
+        TuaSach: formData.get('TuaSach').trim(),
+        TacGia: formData.get('TacGia').trim(),
+        TheLoai: formData.get('TheLoai').trim(),
+        SoLuong: parseInt(formData.get('SoLuong')) || 0
+      };
+
+      // Validation
+      if (!data.MaSach || !data.TuaSach) {
+        showError('Vui lòng điền đầy đủ thông tin bắt buộc');
+        return;
+      }
+
+      try {
+        const url = isEdit ? `/api/sach/${editId}` : '/api/sach';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Có lỗi xảy ra');
+        }
+
+        closeModal();
+        showSuccess(isEdit ? 'Cập nhật sách thành công' : 'Thêm sách thành công');
+        loadBooks();
+      } catch (error) {
+        showError(error.message);
+      }
+    });
+
+    // Search functionality
+    btnSearch.addEventListener('click', performSearch);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    btnResetSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      loadBooks();
+    });
+
+    async function performSearch() {
+      const query = searchInput.value.trim();
+      if (!query) {
+        loadBooks();
+        return;
+      }
+      
+      try {
+        showLoading();
+        const response = await fetch(`/api/sach?q=${encodeURIComponent(query)}`);
+        const books = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(books.error || 'Lỗi tìm kiếm');
+        }
+        
+        renderBooks(books);
+      } catch (error) {
+        hideLoading();
+        showError(error.message);
+      }
+    }
+
+    // Load books
+    async function loadBooks() {
+      try {
+        showLoading();
+        const response = await fetch('/api/sach');
+        const books = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(books.error || 'Lỗi tải dữ liệu');
+        }
+        
+        renderBooks(books);
+      } catch (error) {
+        hideLoading();
+        showError(error.message);
+      }
+    }
+
+    // Render books table
+    function renderBooks(books) {
+      hideLoading();
+      
+      if (books.length === 0) {
+        table.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      table.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+
+      table.innerHTML = books.map(book => `
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${book.MaSach}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${book.TuaSach}</td>
+          <td class="px-6 py-4 text-sm text-gray-700">${book.TacGia || '-'}</td>
+          <td class="px-6 py-4 text-sm text-gray-700">${book.TheLoai || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${book.SoLuong > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${book.SoLuong}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+            <div class="flex justify-center space-x-2">
+              <button onclick="editBook('${book.MaSach}')" 
+                      class="inline-flex items-center p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
+                      title="Chỉnh sửa">
+                <span class="material-icons text-sm">edit</span>
+              </button>
+              <button onclick="confirmDeleteBook('${book.MaSach}')" 
+                      class="inline-flex items-center p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                      title="Xóa">
+                <span class="material-icons text-sm">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Edit book
+    async function editBook(id) {
+      try {
+        const response = await fetch(`/api/sach/${id}`);
+        const book = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(book.error || 'Lỗi tải thông tin sách');
+        }
+        
+        isEdit = true;
+        editId = id;
+        
+        form.MaSach.value = book.MaSach;
+        form.TuaSach.value = book.TuaSach;
+        form.TacGia.value = book.TacGia || '';
+        form.TheLoai.value = book.TheLoai || '';
+        form.SoLuong.value = book.SoLuong;
+        
+        // Disable MaSach field when editing
+        document.getElementById('MaSach').disabled = true;
+        
+        title.textContent = 'Chỉnh sửa Sách';
+        openModal();
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+
+    // Confirm delete
+    function confirmDeleteBook(id) {
+      deleteId = id;
+      openConfirmModal();
+    }
+
+    // Delete book
+    document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+      if (!deleteId) return;
+      
+      try {
+        const response = await fetch(`/api/sach/${deleteId}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Lỗi xóa sách');
+        }
+        
+        closeConfirmModal();
+        showSuccess('Xóa sách thành công');
+        loadBooks();
+      } catch (error) {
+        closeConfirmModal();
+        showError(error.message);
+      }
+    });
+
+    document.getElementById('btnCancelDelete').addEventListener('click', closeConfirmModal);
+
+    // Make functions global for onclick handlers
+    window.editBook = editBook;
+    window.confirmDeleteBook = confirmDeleteBook;
+
+    // Initialize
+    loadBooks();
+  </script>
+</body>
+</html>
