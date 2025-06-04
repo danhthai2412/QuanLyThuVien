@@ -276,8 +276,213 @@
       }
     });
 
+    // Search functionality
+    btnSearch.addEventListener('click', handleSearch);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    });
 
-    
+    async function handleSearch() {
+      const query = searchInput.value.trim();
+      await loadData(query);
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitButton = document.getElementById('btnSave');
+      const originalText = saveText.textContent;
+      
+      try {
+        submitButton.disabled = true;
+        saveText.textContent = 'Đang lưu...';
+        
+        const formData = new FormData(form);
+        const data = {
+          MaDG: formData.get('MaDG') || undefined,
+          HoTen: formData.get('HoTen'),
+          NgaySinh: formData.get('NgaySinh'),
+          GioiTinh: formData.get('GioiTinh'),
+          SDT: formData.get('SDT'),
+          Email: formData.get('Email')
+        };
+
+        let response;
+        if (isEdit) {
+          response = await fetch(`/api/docgia/${editId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        } else {
+          response = await fetch('/api/docgia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        }
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Có lỗi xảy ra');
+        }
+
+        showSuccess(isEdit ? 'Cập nhật độc giả thành công!' : 'Thêm độc giả thành công!');
+        closeModal();
+        await loadData();
+        
+      } catch (error) {
+        console.error('Error:', error);
+        showError(error.message || 'Có lỗi xảy ra khi lưu dữ liệu');
+      } finally {
+        submitButton.disabled = false;
+        saveText.textContent = originalText;
+      }
+    });
+
+    // Load data function
+    async function loadData(searchQuery = '') {
+      try {
+        showLoading();
+        
+        let url = '/api/docgia';
+        if (searchQuery) {
+          url += `?q=${encodeURIComponent(searchQuery)}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error('Không thể tải dữ liệu');
+        }
+        
+        const docgiaList = await response.json();
+        
+        if (docgiaList.length === 0) {
+          tableBody.innerHTML = '';
+          emptyState.classList.remove('hidden');
+        } else {
+          emptyState.classList.add('hidden');
+          tableBody.innerHTML = docgiaList.map(dg => `
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2 font-medium">${dg.MaDG}</td>
+              <td class="px-4 py-2">${dg.HoTen}</td>
+              <td class="px-4 py-2">${formatDate(dg.NgaySinh)}</td>
+              <td class="px-4 py-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${dg.GioiTinh === 'M' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}">
+                  ${dg.GioiTinh === 'M' ? 'Nam' : 'Nữ'}
+                </span>
+              </td>
+              <td class="px-4 py-2">${dg.SDT}</td>
+              <td class="px-4 py-2">${dg.Email}</td>
+              <td class="px-4 py-2 text-center">
+                <div class="flex justify-center space-x-2">
+                  <button onclick="editDG('${dg.MaDG}')" 
+                          class="p-2 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors"
+                          title="Chỉnh sửa">
+                    <span class="material-icons text-yellow-600 text-sm">edit</span>
+                  </button>
+                  <button onclick="deleteDG('${dg.MaDG}')" 
+                          class="p-2 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+                          title="Xóa">
+                    <span class="material-icons text-red-600 text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
+        
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showError('Không thể tải dữ liệu độc giả');
+        tableBody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Edit function
+    async function editDG(id) {
+      try {
+        showLoading();
+        
+        const response = await fetch(`/api/docgia/${id}`);
+        
+        if (!response.ok) {
+          throw new Error('Không thể tải thông tin độc giả');
+        }
+        
+        const dg = await response.json();
+        
+        isEdit = true;
+        editId = id;
+        
+        // Fill form with data
+        document.getElementById('MaDG').value = dg.MaDG;
+        document.getElementById('MaDG').readOnly = true;
+        document.getElementById('HoTen').value = dg.HoTen;
+        document.getElementById('NgaySinh').value = formatDateForInput(dg.NgaySinh);
+        document.querySelector(`input[name="GioiTinh"][value="${dg.GioiTinh}"]`).checked = true;
+        document.getElementById('SDT').value = dg.SDT;
+        document.getElementById('Email').value = dg.Email;
+        
+        formTitle.textContent = 'Chỉnh sửa Độc giả';
+        saveText.textContent = 'Cập nhật';
+        
+        openModal();
+        
+      } catch (error) {
+        console.error('Error loading reader data:', error);
+        showError('Không thể tải thông tin độc giả');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Delete function
+    async function deleteDG(id) {
+      deleteId = id;
+      openConfirmModal('Bạn có chắc chắn muốn xóa độc giả này?', async () => {
+        try {
+          showLoading();
+          
+          const response = await fetch(`/api/docgia/${deleteId}`, {
+            method: 'DELETE'
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.error || 'Không thể xóa độc giả');
+          }
+          
+          showSuccess('Xóa độc giả thành công!');
+          await loadData();
+          
+        } catch (error) {
+          console.error('Error deleting reader:', error);
+          showError(error.message || 'Không thể xóa độc giả');
+        } finally {
+          hideLoading();
+          deleteId = null;
+        }
+      });
+    }
+
+    // Make functions global for inline onclick handlers
+    window.editDG = editDG;
+    window.deleteDG = deleteDG;
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+    });
   </script>
 </body>
 </html>

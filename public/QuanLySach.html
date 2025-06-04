@@ -279,10 +279,201 @@
         SoLuong: parseInt(formData.get('SoLuong')) || 0
       };
 
-      // TODO: Add your form submission logic here
+      // Validation
+      if (!data.MaSach || !data.TuaSach) {
+        showError('Vui lòng điền đầy đủ thông tin bắt buộc');
+        return;
+      }
 
+      try {
+        const url = isEdit ? `/api/sach/${editId}` : '/api/sach';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Có lỗi xảy ra');
+        }
+
+        closeModal();
+        showSuccess(isEdit ? 'Cập nhật sách thành công' : 'Thêm sách thành công');
+        loadBooks();
+      } catch (error) {
+        showError(error.message);
+      }
     });
 
+    // Search functionality
+    btnSearch.addEventListener('click', performSearch);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    btnResetSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      loadBooks();
+    });
+
+    async function performSearch() {
+      const query = searchInput.value.trim();
+      if (!query) {
+        loadBooks();
+        return;
+      }
+      
+      try {
+        showLoading();
+        const response = await fetch(`/api/sach?q=${encodeURIComponent(query)}`);
+        const books = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(books.error || 'Lỗi tìm kiếm');
+        }
+        
+        renderBooks(books);
+      } catch (error) {
+        hideLoading();
+        showError(error.message);
+      }
+    }
+
+    // Load books
+    async function loadBooks() {
+      try {
+        showLoading();
+        const response = await fetch('/api/sach');
+        const books = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(books.error || 'Lỗi tải dữ liệu');
+        }
+        
+        renderBooks(books);
+      } catch (error) {
+        hideLoading();
+        showError(error.message);
+      }
+    }
+
+    // Render books table
+    function renderBooks(books) {
+      hideLoading();
+      
+      if (books.length === 0) {
+        table.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      table.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+
+      table.innerHTML = books.map(book => `
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${book.MaSach}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${book.TuaSach}</td>
+          <td class="px-6 py-4 text-sm text-gray-700">${book.TacGia || '-'}</td>
+          <td class="px-6 py-4 text-sm text-gray-700">${book.TheLoai || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${book.SoLuong > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${book.SoLuong}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+            <div class="flex justify-center space-x-2">
+              <button onclick="editBook('${book.MaSach}')" 
+                      class="inline-flex items-center p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
+                      title="Chỉnh sửa">
+                <span class="material-icons text-sm">edit</span>
+              </button>
+              <button onclick="confirmDeleteBook('${book.MaSach}')" 
+                      class="inline-flex items-center p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                      title="Xóa">
+                <span class="material-icons text-sm">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Edit book
+    async function editBook(id) {
+      try {
+        const response = await fetch(`/api/sach/${id}`);
+        const book = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(book.error || 'Lỗi tải thông tin sách');
+        }
+        
+        isEdit = true;
+        editId = id;
+        
+        form.MaSach.value = book.MaSach;
+        form.TuaSach.value = book.TuaSach;
+        form.TacGia.value = book.TacGia || '';
+        form.TheLoai.value = book.TheLoai || '';
+        form.SoLuong.value = book.SoLuong;
+        
+        // Disable MaSach field when editing
+        document.getElementById('MaSach').disabled = true;
+        
+        title.textContent = 'Chỉnh sửa Sách';
+        openModal();
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+
+    // Confirm delete
+    function confirmDeleteBook(id) {
+      deleteId = id;
+      openConfirmModal();
+    }
+
+    // Delete book
+    document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+      if (!deleteId) return;
+      
+      try {
+        const response = await fetch(`/api/sach/${deleteId}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Lỗi xóa sách');
+        }
+        
+        closeConfirmModal();
+        showSuccess('Xóa sách thành công');
+        loadBooks();
+      } catch (error) {
+        closeConfirmModal();
+        showError(error.message);
+      }
+    });
+
+    document.getElementById('btnCancelDelete').addEventListener('click', closeConfirmModal);
+
+    // Make functions global for onclick handlers
+    window.editBook = editBook;
+    window.confirmDeleteBook = confirmDeleteBook;
+
+    // Initialize
+    loadBooks();
   </script>
 </body>
 </html>
